@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const TIPS = [
     "Pay yourself first — save before you spend.",
@@ -27,6 +27,20 @@ const TIPS = [
     "The earlier you start, the less you need to invest.",
 ];
 
+// Rich dark color palettes — two colors per palette for the animated gradient shift
+const COLOR_PALETTES = [
+    ['#0F2027', '#2C5364'],    // Deep ocean
+    ['#1A1A2E', '#16213E'],    // Midnight blue
+    ['#0D1117', '#161B22'],    // GitHub dark
+    ['#1B1B3A', '#2E1A47'],    // Deep purple
+    ['#0B1D26', '#1A3A4A'],    // Dark teal
+    ['#1C1C1C', '#2D2D44'],    // Charcoal indigo
+    ['#0E1428', '#1B2838'],    // Steam dark
+    ['#141E30', '#243B55'],    // Royal navy
+    ['#1A0533', '#2D1B69'],    // Cosmic purple
+    ['#0A192F', '#172A45'],    // Nord night
+];
+
 interface AppSplashProps {
     onFinish: () => void;
 }
@@ -36,10 +50,27 @@ export default function AppSplash({ onFinish }: AppSplashProps) {
     const slideAnim = useRef(new Animated.Value(20)).current;
     const tipFade = useRef(new Animated.Value(0)).current;
     const exitAnim = useRef(new Animated.Value(1)).current;
+    const colorShift = useRef(new Animated.Value(0)).current;
 
     const tip = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], []);
+    const palette = useMemo(() => COLOR_PALETTES[Math.floor(Math.random() * COLOR_PALETTES.length)], []);
+
+    const bgColor = colorShift.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [palette[0], palette[1], palette[0]],
+    });
 
     useEffect(() => {
+        // Slow animated color shift
+        Animated.loop(
+            Animated.timing(colorShift, {
+                toValue: 1,
+                duration: 4000,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: false,
+            })
+        ).start();
+
         // Logo entrance
         Animated.parallel([
             Animated.timing(fadeAnim, {
@@ -78,7 +109,7 @@ export default function AppSplash({ onFinish }: AppSplashProps) {
     }, []);
 
     return (
-        <Animated.View style={[styles.container, { opacity: exitAnim }]}>
+        <Animated.View style={[styles.container, { backgroundColor: bgColor, opacity: exitAnim }]}>
             <View style={styles.content}>
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
                     <Image
@@ -102,7 +133,6 @@ export default function AppSplash({ onFinish }: AppSplashProps) {
 const styles = StyleSheet.create({
     container: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: '#FFFFFF',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 100,
@@ -122,7 +152,7 @@ const styles = StyleSheet.create({
     tipLabel: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#999',
+        color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1,
         marginBottom: 8,
         textTransform: 'uppercase',
@@ -130,7 +160,7 @@ const styles = StyleSheet.create({
     tipText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
+        color: 'rgba(255,255,255,0.85)',
         textAlign: 'center',
         lineHeight: 24,
     },
@@ -138,7 +168,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 50,
         fontSize: 12,
-        color: '#BBB',
+        color: 'rgba(255,255,255,0.3)',
         fontWeight: '500',
     },
 });
