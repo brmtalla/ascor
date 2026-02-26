@@ -10,6 +10,7 @@ export default function SocialLayout() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.white },
         headerTintColor: colors.black,
+        headerTitleStyle: { fontSize: 19, fontWeight: '800' },
         headerShadowVisible: false,
       }}
     >

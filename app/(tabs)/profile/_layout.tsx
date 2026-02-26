@@ -10,6 +10,7 @@ export default function ProfileLayout() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.white },
         headerTintColor: colors.black,
+        headerTitleStyle: { fontSize: 19, fontWeight: '800' },
         headerShadowVisible: false,
       }}
     >

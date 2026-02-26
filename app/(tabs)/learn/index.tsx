@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, ScrollView } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { Clock, BookOpen, CheckCircle, Star, Users, TrendingUp, Filter } from 'lucide-react-native';
+import { Clock, BookOpen, CheckCircle, Star, Users, TrendingUp, Filter, PlayCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColors, type ThemeColors } from '@/constants/colors';
 import GlassCard from '@/components/GlassCard';
@@ -41,6 +41,9 @@ export default function LearnScreen() {
   }, [modules, activeCategory]);
 
   const completedCount = useMemo(() => modules.filter(m => m.completed).length, [modules]);
+
+  // Find the next uncompleted module for the "Coming Up" card
+  const nextModule = useMemo(() => modules.find(m => !m.completed), [modules]);
 
   const handleModulePress = useCallback((mod: LearnModule) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -106,10 +109,8 @@ export default function LearnScreen() {
     );
   }, [handleModulePress]);
 
-  return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Learn' }} />
-
+  const ListHeader = useMemo(() => (
+    <>
       <View style={styles.headerSection}>
         <View style={styles.headerTop}>
           <View>
@@ -132,6 +133,26 @@ export default function LearnScreen() {
         </View>
       </View>
 
+      {/* Coming Up Card */}
+      {nextModule && (
+        <Pressable
+          onPress={() => handleModulePress(nextModule)}
+          style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+        >
+          <View style={styles.comingUpCard}>
+            <View style={styles.comingUpBadge}>
+              <Text style={styles.comingUpBadgeText}>COMING UP</Text>
+            </View>
+            <Text style={styles.comingUpTitle}>{nextModule.title}</Text>
+            <Text style={styles.comingUpDesc}>{nextModule.summary}</Text>
+            <View style={styles.comingUpBtn}>
+              <PlayCircle size={18} color={colors.black} />
+              <Text style={styles.comingUpBtnText}>Start Now</Text>
+            </View>
+          </View>
+        </Pressable>
+      )}
+
       <View style={styles.filterSection}>
         <ScrollView
           horizontal
@@ -153,12 +174,21 @@ export default function LearnScreen() {
         </ScrollView>
       </View>
 
+      <Text style={styles.sectionLabel}>Modules</Text>
+    </>
+  ), [activeCategory, completedCount, nextModule, colors, styles]);
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ title: 'Learn' }} />
+
       <FlatList
         data={filteredModules}
         keyExtractor={(item) => item.id}
         renderItem={renderModule}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={ListHeader}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🔍</Text>
@@ -196,6 +226,68 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     color: colors.mediumGray,
     lineHeight: 20,
+  },
+  comingUpCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: colors.darkGray,
+    borderRadius: 18,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  comingUpBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginBottom: 14,
+  },
+  comingUpBadgeText: {
+    fontSize: 11,
+    fontWeight: '800' as const,
+    color: colors.white,
+    letterSpacing: 1.2,
+  },
+  comingUpTitle: {
+    fontSize: 24,
+    fontWeight: '800' as const,
+    color: colors.white,
+    marginBottom: 8,
+    lineHeight: 30,
+  },
+  comingUpDesc: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  comingUpBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.white,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 8,
+  },
+  comingUpBtnText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.black,
+  },
+  sectionLabel: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: colors.black,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    marginTop: 4,
   },
   progressCard: {
     backgroundColor: colors.white,
