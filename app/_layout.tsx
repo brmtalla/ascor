@@ -2,11 +2,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useColors } from "@/constants/colors";
 import { CartProvider } from "@/contexts/CartContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import AppSplash from "@/components/AppSplash";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -44,6 +45,8 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true);
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
@@ -54,6 +57,9 @@ export default function RootLayout() {
         <CartProvider>
           <GestureHandlerRootView>
             <RootLayoutNav />
+            {showSplash && (
+              <AppSplash onFinish={() => setShowSplash(false)} />
+            )}
           </GestureHandlerRootView>
         </CartProvider>
       </QueryClientProvider>
