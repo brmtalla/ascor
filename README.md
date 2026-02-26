@@ -9,7 +9,7 @@ A community-powered savings circle app built with React Native and Expo. Ascor l
 - **Reputation System** — On-time payment rates, completed cycles, and account age build your profile's credibility.
 - **Vaults** — Collaborative goal-tracking vaults with milestones, media, and group messaging.
 - **Social Feed** — Share updates within your circles. Investment solicitation is automatically flagged and blocked.
-- **Deploy** — Discover and support community causes, businesses, and opportunities.
+- **Deploy** — Discover and support community causes, businesses, and opportunities, as well as re-invest your lump sum capital into equity.
 - **Learn** — Financial literacy modules covering budgeting, saving, and cooperative economics.
 - **Shop** — Business users can create and manage storefronts for their products and services.
 - **Dark Mode** — Full light/dark theme support with system preference detection.
