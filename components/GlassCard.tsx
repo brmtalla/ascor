@@ -1,20 +1,53 @@
-import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, ViewStyle } from 'react-native';
 import { useColors, type ThemeColors } from '@/constants/colors';
 
 interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
+  delay?: number;
 }
 
-export default function GlassCard({ children, style }: GlassCardProps) {
+export default function GlassCard({ children, style, delay = 0 }: GlassCardProps) {
   const colors = useColors();
   const dynamicStyles = createStyles(colors);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(12)).current;
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 80,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
   return (
-    <View style={[dynamicStyles.card, style]}>
+    <Animated.View
+      style={[
+        dynamicStyles.card,
+        style,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
       {children}
-    </View>
+    </Animated.View>
   );
 }
 

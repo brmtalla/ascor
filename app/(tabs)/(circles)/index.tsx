@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, TextInput } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput, Animated, Easing } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Plus, Search, Bell, CircleDot, Trophy, Users } from 'lucide-react-native';
 import { Stack } from 'expo-router';
@@ -43,8 +43,8 @@ export default function CirclesScreen() {
     router.push('/menu');
   }, [router]);
 
-  const renderCircle = useCallback(({ item }: { item: Circle }) => (
-    <CircleCard circle={item} onPress={() => handleCirclePress(item)} />
+  const renderCircle = useCallback(({ item, index }: { item: Circle; index: number }) => (
+    <CircleCard circle={item} onPress={() => handleCirclePress(item)} index={index} />
   ), [handleCirclePress]);
 
   const ListHeader = useMemo(() => (
@@ -114,6 +114,21 @@ export default function CirclesScreen() {
     </>
   ), [searchQuery, myCirclesCount, activeCount, completedCount, handleCreatePress, colors, styles]);
 
+  const badgePulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (unreadCount > 0) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(badgePulse, { toValue: 1.3, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(badgePulse, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, [unreadCount]);
+
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -122,9 +137,9 @@ export default function CirclesScreen() {
             <Pressable onPress={handleNotificationPress} hitSlop={8} style={styles.headerBtn}>
               <Bell size={22} color={colors.black} />
               {unreadCount > 0 && (
-                <View style={styles.badge}>
+                <Animated.View style={[styles.badge, { transform: [{ scale: badgePulse }] }]}>
                   <Text style={styles.badgeText}>{unreadCount}</Text>
-                </View>
+                </Animated.View>
               )}
             </Pressable>
           ),

@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Heart, Bookmark, ExternalLink } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -10,9 +10,10 @@ import { SocialPost } from '@/types';
 
 interface PostCardProps {
   post: SocialPost;
+  index?: number;
 }
 
-function PostCard({ post }: PostCardProps) {
+function PostCard({ post, index = 0 }: PostCardProps) {
   const router = useRouter();
   const colors = useColors();
   const styles = createStyles(colors);
@@ -20,14 +21,46 @@ function PostCard({ post }: PostCardProps) {
   const [likeCount, setLikeCount] = useState(post.likes);
   const [bookmarked, setBookmarked] = useState(post.bookmarked);
 
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const bookmarkScale = useRef(new Animated.Value(1)).current;
+
   const handleLike = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Heart bounce animation
+    Animated.sequence([
+      Animated.spring(heartScale, {
+        toValue: 1.4,
+        tension: 300,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(heartScale, {
+        toValue: 1,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
     setLiked(prev => !prev);
     setLikeCount(prev => liked ? prev - 1 : prev + 1);
   }, [liked]);
 
   const handleBookmark = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.sequence([
+      Animated.spring(bookmarkScale, {
+        toValue: 1.3,
+        tension: 300,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(bookmarkScale, {
+        toValue: 1,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
     setBookmarked(prev => !prev);
   }, []);
 
@@ -46,7 +79,7 @@ function PostCard({ post }: PostCardProps) {
   };
 
   return (
-    <GlassCard style={styles.card}>
+    <GlassCard style={styles.card} delay={index * 60}>
       <Pressable style={styles.header} onPress={handleProfilePress}>
         <Image source={{ uri: post.userAvatar }} style={styles.avatar} />
         <View style={styles.headerText}>
@@ -88,11 +121,15 @@ function PostCard({ post }: PostCardProps) {
 
       <View style={styles.actions}>
         <Pressable onPress={handleLike} style={styles.actionBtn} hitSlop={8}>
-          <Heart size={18} color={liked ? colors.primary : colors.mediumGray} fill={liked ? colors.primary : 'none'} />
+          <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+            <Heart size={18} color={liked ? colors.primary : colors.mediumGray} fill={liked ? colors.primary : 'none'} />
+          </Animated.View>
           <Text style={[styles.actionText, liked && { color: colors.primary }]}>{likeCount}</Text>
         </Pressable>
         <Pressable onPress={handleBookmark} style={styles.actionBtn} hitSlop={8}>
-          <Bookmark size={18} color={bookmarked ? colors.accent : colors.mediumGray} fill={bookmarked ? colors.accent : 'none'} />
+          <Animated.View style={{ transform: [{ scale: bookmarkScale }] }}>
+            <Bookmark size={18} color={bookmarked ? colors.accent : colors.mediumGray} fill={bookmarked ? colors.accent : 'none'} />
+          </Animated.View>
           <Text style={[styles.actionText, bookmarked && { color: colors.accent }]}>{post.bookmarks}</Text>
         </Pressable>
       </View>

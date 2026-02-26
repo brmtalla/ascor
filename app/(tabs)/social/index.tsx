@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, TextInput, Modal, Alert } from 'react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput, Modal, Alert, Animated, Easing } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { PenSquare, X, Send, MessageCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -42,9 +42,24 @@ export default function SocialScreen() {
     router.push('/messages');
   }, [router]);
 
-  const renderPost = useCallback(({ item }: { item: SocialPost }) => (
-    <PostCard post={item} />
+  const renderPost = useCallback(({ item, index }: { item: SocialPost; index: number }) => (
+    <PostCard post={item} index={index} />
   ), []);
+
+  const badgePulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (totalUnread > 0) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(badgePulse, { toValue: 1.3, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(badgePulse, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, [totalUnread]);
 
   return (
     <View style={styles.container}>
@@ -55,9 +70,9 @@ export default function SocialScreen() {
             <Pressable onPress={handleMessages} hitSlop={8} style={styles.headerBtn}>
               <MessageCircle size={22} color={colors.black} />
               {totalUnread > 0 && (
-                <View style={styles.msgBadge}>
+                <Animated.View style={[styles.msgBadge, { transform: [{ scale: badgePulse }] }]}>
                   <Text style={styles.msgBadgeText}>{totalUnread}</Text>
-                </View>
+                </Animated.View>
               )}
             </Pressable>
           ),

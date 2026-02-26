@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
 import { Users, DollarSign } from 'lucide-react-native';
 import { useColors, type ThemeColors } from '@/constants/colors';
 import GlassCard from './GlassCard';
@@ -9,11 +9,46 @@ import { Circle } from '@/types';
 interface CircleCardProps {
   circle: Circle;
   onPress: () => void;
+  index?: number;
 }
 
-function CircleCard({ circle, onPress }: CircleCardProps) {
+function CircleCard({ circle, onPress, index = 0 }: CircleCardProps) {
   const colors = useColors();
   const styles = createStyles(colors);
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  const progress = circle.totalSeats > 0 ? circle.currentMonth / 4 : 0;
+
+  useEffect(() => {
+    // Animate progress bar fill
+    Animated.timing(progressAnim, {
+      toValue: progress,
+      duration: 800,
+      delay: 300 + index * 80,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false, // width animation can't use native driver
+    }).start();
+  }, [progress]);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      tension: 150,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 200,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const statusColors: Record<string, string> = {
     recruiting: colors.warning,
@@ -30,50 +65,60 @@ function CircleCard({ circle, onPress }: CircleCardProps) {
   };
 
   const statusColor = statusColors[circle.status] ?? colors.mediumGray;
-  const progress = circle.totalSeats > 0 ? circle.currentMonth / 4 : 0;
+
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
-      <GlassCard style={styles.card}>
-        <View style={styles.row}>
-          <StatusRing avatar={circle.avatar} status={circle.status === 'recruiting' ? 'open' : 'locked'} />
-          <View style={styles.content}>
-            <View style={styles.titleRow}>
-              <Text style={styles.name} numberOfLines={1}>{circle.name}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>
-                <Text style={[styles.statusText, { color: statusColor }]}>
-                  {statusLabels[circle.status] ?? circle.status}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.metaRow}>
-              <Text style={styles.contribution}>${circle.contribution}</Text>
-              <Text style={styles.metaLabel}>/month</Text>
-              <View style={styles.metaDot} />
-              <Text style={styles.metaLabel}>Cycle {circle.currentMonth}/4</Text>
-            </View>
-
-            <View style={styles.details}>
-              <View style={styles.detailItem}>
-                <Users size={12} color={colors.mediumGray} />
-                <Text style={styles.detailText}>{circle.filledSeats}/4 members</Text>
-              </View>
-              {circle.nextPayoutMember && (
-                <View style={styles.detailItem}>
-                  <DollarSign size={12} color={colors.accent} />
-                  <Text style={[styles.detailText, { color: colors.accent }]}>Next: {circle.nextPayoutMember}</Text>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <GlassCard style={styles.card} delay={index * 80}>
+          <View style={styles.row}>
+            <StatusRing avatar={circle.avatar} status={circle.status === 'recruiting' ? 'open' : 'locked'} />
+            <View style={styles.content}>
+              <View style={styles.titleRow}>
+                <Text style={styles.name} numberOfLines={1}>{circle.name}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>
+                  <Text style={[styles.statusText, { color: statusColor }]}>
+                    {statusLabels[circle.status] ?? circle.status}
+                  </Text>
                 </View>
-              )}
-            </View>
+              </View>
 
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: statusColor }]} />
+              <View style={styles.metaRow}>
+                <Text style={styles.contribution}>${circle.contribution}</Text>
+                <Text style={styles.metaLabel}>/month</Text>
+                <View style={styles.metaDot} />
+                <Text style={styles.metaLabel}>Cycle {circle.currentMonth}/4</Text>
+              </View>
+
+              <View style={styles.details}>
+                <View style={styles.detailItem}>
+                  <Users size={12} color={colors.mediumGray} />
+                  <Text style={styles.detailText}>{circle.filledSeats}/4 members</Text>
+                </View>
+                {circle.nextPayoutMember && (
+                  <View style={styles.detailItem}>
+                    <DollarSign size={12} color={colors.accent} />
+                    <Text style={[styles.detailText, { color: colors.accent }]}>Next: {circle.nextPayoutMember}</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.progressBarBg}>
+                <Animated.View style={[styles.progressBarFill, { width: progressWidth, backgroundColor: statusColor }]} />
+              </View>
             </View>
           </View>
-        </View>
-      </GlassCard>
-    </Pressable>
+        </GlassCard>
+      </Pressable>
+    </Animated.View>
   );
 }
 
